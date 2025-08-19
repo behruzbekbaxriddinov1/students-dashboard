@@ -84,12 +84,12 @@
         <div class="profile">
           <img id="profilePic" class="avatar" src="https://via.placeholder.com/80" alt="avatar" />
           <div>
-            <div id="profileName" style="font-weight:700">Гость</div>
+            <div id="profileName" style="font-weight:700">Guest</div>
             <div class="muted" id="profileRole">Student</div>
           </div>
         </div>
-        <button class="btn" id="btnExport" title="Экспорт JSON">Экспорт</button>
-        <label class="btn" for="importFile">Импорт</label>
+        <button class="btn" id="btnExport" title="Экспорт JSON">Export</button>
+        <label class="btn" for="importFile">Import</label>
         <input id="importFile" type="file" accept="application/json" style="display:none" />
         <button class="btn" id="btnSettings">⚙️</button>
       </div>
@@ -114,9 +114,9 @@
           <h3 class="section-title">Quick links</h3>
           <div class="list" id="linksList"></div>
           <div style="display:flex;gap:8px;margin-top:8px">
-            <input id="linkTitle" placeholder="Название" />
+            <input id="linkTitle" placeholder="Name" />
             <input id="linkUrl" placeholder="URL" />
-            <button class="btn" id="addLink">Добавить</button>
+            <button class="btn" id="addLink">Add</button>
           </div>
         </div>
       </div>
@@ -127,9 +127,9 @@
         <div class="card subjects" id="subjects">
           <div class="toolbar">
             <h3 class="section-title" style="flex:1">Subjects</h3>
-            <input id="subjectName" placeholder="Новый предмет…"/>
-            <input id="subjectIcon" placeholder="Иконка (например 📐)" style="width:160px"/>
-            <button class="btn" id="addSubject">Добавить</button>
+            <input id="subjectName" placeholder="New Subject…"/>
+            <input id="subjectIcon" placeholder="Icon (ex. 📐)" style="width:160px"/>
+            <button class="btn" id="addSubject">Add</button>
           </div>
           <div class="subject-grid" id="subjectsGrid"></div>
         </div>
@@ -157,7 +157,7 @@
         <div class="card" id="assignments">
           <h3 class="section-title">Assignments & Exams</h3>
           <div class="assign-toolbar">
-            <input id="asTitle" placeholder="Название" />
+            <input id="asTitle" placeholder="Name" />
             <select id="asSubject"></select>
             <select id="asStatus">
               <option>To complete</option>
@@ -166,12 +166,12 @@
               <option>Completed</option>
               <option>Late</option>
             </select>
-            <input id="asGrade" type="number" min="0" max="100" placeholder="Оценка % (необ.)" />
+            <input id="asGrade" type="number" min="0" max="100" placeholder="Mark % (Must be filled)" />
             <input id="asDate" type="date" />
-            <button class="btn primary" id="addAssignment">Добавить</button>
+            <button class="btn primary" id="addAssignment">Add</button>
           </div>
           <table>
-            <thead><tr><th>Название</th><th>Предмет</th><th>Статус</th><th>Оценка</th><th>Дата</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Subject</th><th>Status</th><th>Mark</th><th>Date</th><th></th></tr></thead>
             <tbody id="asTable"></tbody>
           </table>
         </div>
@@ -181,13 +181,13 @@
 
   <!-- Settings panel -->
   <aside class="settings" id="settings">
-    <h3>Профиль</h3>
-    <label>Имя<br/><input id="stName"/></label><br/><br/>
-    <label>Роль<br/><input id="stRole" placeholder="Student"/></label><br/><br/>
-    <label>Фото (URL)<br/><input id="stPic"/></label><br/><br/>
-    <button class="btn" id="saveProfile">Сохранить</button>
+    <h3>Profile</h3>
+    <label>Name<br/><input id="stName"/></label><br/><br/>
+    <label>Role<br/><input id="stRole" placeholder="Student"/></label><br/><br/>
+    <label>Photo (URL)<br/><input id="stPic"/></label><br/><br/>
+    <button class="btn" id="saveProfile">Save</button>
     <hr style="margin:16px 0"/>
-    <h3>Видимость секций</h3>
+    <h3>Visibility of sections</h3>
     <div class="list">
       <label><input type="checkbox" data-toggle="quickActions" checked/> Quick Actions</label>
       <label><input type="checkbox" data-toggle="quickLinks" checked/> Quick Links</label>
@@ -202,7 +202,7 @@
     const $ = (sel,root=document)=>root.querySelector(sel); const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
     const LS='student-dashboard-v2';
     const state = JSON.parse(localStorage.getItem(LS)||'{}');
-    state.profile = state.profile||{name:'Гость', role:'Student', pic:'https://via.placeholder.com/80'};
+    state.profile = state.profile||{name:'Guest', role:'Student', pic:'https://via.placeholder.com/80'};
     state.links = state.links||[
       {t:'ChatGPT', u:'https://chat.openai.com'},
       {t:'Google Docs', u:'https://docs.google.com'},
@@ -227,7 +227,7 @@
     }
 
     $('#saveProfile').onclick = ()=>{
-      state.profile.name = $('#stName').value.trim()||'Гость';
+      state.profile.name = $('#stName').value.trim()||'Guest';
       state.profile.role = $('#stRole').value.trim()||'Student';
       state.profile.pic = $('#stPic').value.trim()||state.profile.pic;
       save(); renderProfile();
@@ -380,7 +380,7 @@
     // init
     renderAll();
     // Quick action placeholder
-    $('#qaNewFlashcard').onclick = ()=> alert('Добавим флеш-карты позже ✨');
+    $('#qaNewFlashcard').onclick = ()=> alert('FlashCards: Soon ✨');
   </script>
 </body>
 </html>
