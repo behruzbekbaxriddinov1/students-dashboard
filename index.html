@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STUDENT DASHBOARD — HTML</title>
+  <style>
+    :root{
+      --bg:#fbfbfd;--panel:#ffffff;--line:#e6e8ee;--text:#1f2937;--muted:#6b7280;--accent:#111827;
+      --pill:#f3f4f6;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--info:#3b82f6;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
+    a{color:inherit}
+    /* ===== Notion-like header ===== */
+    header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--line);z-index:50}
+    .head-inner{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:18px}
+    .brand{display:flex;gap:14px;align-items:center}
+    .brand .logo{font-size:34px}
+    .brand h1{margin:0;font-size:28px;letter-spacing:.3px}
+    .actions{display:flex;gap:10px;align-items:center}
+    .chip{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--pill);color:var(--muted);font-size:12px}
+    .btn{border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:10px;cursor:pointer}
+    .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+    /* ===== Layout ===== */
+    .container{max-width:1180px;margin:0 auto;padding:18px}
+    .grid{display:grid;grid-template-columns:260px 1fr;gap:24px}
+    @media (max-width: 960px){.grid{grid-template-columns:1fr}}
+
+    /* ===== Cards & sections ===== */
+    .section-title{font-weight:700;margin:0 0 10px 0;letter-spacing:.2px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+    .muted{color:var(--muted)}
+    .list{display:grid;gap:8px}
+    .ghost{opacity:.5}
+
+    /* Quick Actions */
+    .qa .btn{width:100%;justify-content:flex-start;display:flex;gap:8px}
+    .qa .btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Quick Links */
+    .ql a{display:block;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--pill);text-decoration:none}
+
+    /* Subjects */
+    .subjects .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .subject-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px,1fr));gap:12px}
+    .subject{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:16px;display:flex;gap:12px;align-items:center}
+    .subject .ic{font-size:26px}
+    .subject input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;width:100%}
+
+    /* Graphs */
+    .graphs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+    .canvas-wrap{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel)}
+    canvas{width:100%;height:200px}
+
+    /* Assignments */
+    .assign-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+    .assign-toolbar input, .assign-toolbar select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-top:1px solid var(--line);padding:8px;text-align:left}
+    tr:hover{background:#fafafa}
+
+    /* Settings Panel */
+    .settings{position:fixed;right:-340px;top:0;height:100%;width:340px;background:var(--panel);border-left:1px solid var(--line);box-shadow:-10px 0 30px rgba(0,0,0,.06);transition:right .25s ease;z-index:60;padding:16px;overflow:auto}
+    .settings.open{right:0}
+    .settings h3{margin:8px 0}
+    .settings input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+
+    /* Profile */
+    .profile{display:flex;gap:10px;align-items:center}
+    .avatar{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);object-fit:cover}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="head-inner">
+      <div class="brand">
+        <div class="logo">🎓</div>
+        <h1>STUDENT DASHBOARD</h1>
+      </div>
+      <div class="actions">
+        <div class="profile">
+          <img id="profilePic" class="avatar" src="https://via.placeholder.com/80" alt="avatar" />
+          <div>
+            <div id="profileName" style="font-weight:700">Гость</div>
+            <div class="muted" id="profileRole">Student</div>
+          </div>
+        </div>
+        <button class="btn" id="btnExport" title="Экспорт JSON">Экспорт</button>
+        <label class="btn" for="importFile">Импорт</label>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+        <button class="btn" id="btnSettings">⚙️</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <h2 class="section-title">Overview</h2>
+    <div class="grid">
+      <!-- LEFT COLUMN -->
+      <div class="left">
+        <div class="card qa" id="quickActions">
+          <h3 class="section-title">Quick Actions</h3>
+          <div class="list">
+            <button class="btn" id="qaNewSubject">➕ New subject</button>
+            <button class="btn" id="qaNewAssignment">📝 New assignment</button>
+            <button class="btn" id="qaNewFlashcard">📇 New flashcard</button>
+          </div>
+        </div>
+
+        <div class="card ql" id="quickLinks">
+          <h3 class="section-title">Quick links</h3>
+          <div class="list" id="linksList"></div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input id="linkTitle" placeholder="Название" />
+            <input id="linkUrl" placeholder="URL" />
+            <button class="btn" id="addLink">Добавить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT / MAIN COLUMN -->
+      <div class="right">
+        <!-- Subjects -->
+        <div class="card subjects" id="subjects">
+          <div class="toolbar">
+            <h3 class="section-title" style="flex:1">Subjects</h3>
+            <input id="subjectName" placeholder="Новый предмет…"/>
+            <input id="subjectIcon" placeholder="Иконка (например 📐)" style="width:160px"/>
+            <button class="btn" id="addSubject">Добавить</button>
+          </div>
+          <div class="subject-grid" id="subjectsGrid"></div>
+        </div>
+
+        <!-- Graphs -->
+        <div class="card" id="graphs">
+          <h3 class="section-title">Graphs</h3>
+          <div class="graphs">
+            <div class="canvas-wrap">
+              <div class="muted" style="margin:4px 0">Average grade (by subject)</div>
+              <canvas id="barGrades"></canvas>
+            </div>
+            <div class="canvas-wrap">
+              <div class="muted" style="margin:4px 0">Assignments (by subject)</div>
+              <canvas id="donutSubjects"></canvas>
+            </div>
+            <div class="canvas-wrap">
+              <div class="muted" style="margin:4px 0">Assignments (by status)</div>
+              <canvas id="barStatus"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignments -->
+        <div class="card" id="assignments">
+          <h3 class="section-title">Assignments & Exams</h3>
+          <div class="assign-toolbar">
+            <input id="asTitle" placeholder="Название" />
+            <select id="asSubject"></select>
+            <select id="asStatus">
+              <option>To complete</option>
+              <option>In progress</option>
+              <option>To review</option>
+              <option>Completed</option>
+              <option>Late</option>
+            </select>
+            <input id="asGrade" type="number" min="0" max="100" placeholder="Оценка % (необ.)" />
+            <input id="asDate" type="date" />
+            <button class="btn primary" id="addAssignment">Добавить</button>
+          </div>
+          <table>
+            <thead><tr><th>Название</th><th>Предмет</th><th>Статус</th><th>Оценка</th><th>Дата</th><th></th></tr></thead>
+            <tbody id="asTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings panel -->
+  <aside class="settings" id="settings">
+    <h3>Профиль</h3>
+    <label>Имя<br/><input id="stName"/></label><br/><br/>
+    <label>Роль<br/><input id="stRole" placeholder="Student"/></label><br/><br/>
+    <label>Фото (URL)<br/><input id="stPic"/></label><br/><br/>
+    <button class="btn" id="saveProfile">Сохранить</button>
+    <hr style="margin:16px 0"/>
+    <h3>Видимость секций</h3>
+    <div class="list">
+      <label><input type="checkbox" data-toggle="quickActions" checked/> Quick Actions</label>
+      <label><input type="checkbox" data-toggle="quickLinks" checked/> Quick Links</label>
+      <label><input type="checkbox" data-toggle="subjects" checked/> Subjects</label>
+      <label><input type="checkbox" data-toggle="graphs" checked/> Graphs</label>
+      <label><input type="checkbox" data-toggle="assignments" checked/> Assignments</label>
+    </div>
+  </aside>
+
+  <script>
+    // ======= Utilities & State =======
+    const $ = (sel,root=document)=>root.querySelector(sel); const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+    const LS='student-dashboard-v2';
+    const state = JSON.parse(localStorage.getItem(LS)||'{}');
+    state.profile = state.profile||{name:'Гость', role:'Student', pic:'https://via.placeholder.com/80'};
+    state.links = state.links||[
+      {t:'ChatGPT', u:'https://chat.openai.com'},
+      {t:'Google Docs', u:'https://docs.google.com'},
+      {t:'Google Sheets', u:'https://sheets.google.com'}
+    ];
+    state.subjects = state.subjects||[
+      {n:'Maths', ic:'➗'},{n:'Physics', ic:'⚛️'},{n:'History', ic:'🏛️'},{n:'French', ic:'💬'}
+    ];
+    state.assignments = state.assignments||[]; // {id,title,subject,status,grade?,date?}
+
+    const save=()=>localStorage.setItem(LS, JSON.stringify(state));
+
+    // ======= Header / Profile =======
+    function renderProfile(){
+      $('#profileName').textContent = state.profile.name||'Гость';
+      $('#profileRole').textContent = state.profile.role||'Student';
+      $('#profilePic').src = state.profile.pic||'https://via.placeholder.com/80';
+      // settings form defaults
+      $('#stName').value = state.profile.name||'';
+      $('#stRole').value = state.profile.role||'';
+      $('#stPic').value = state.profile.pic||'';
+    }
+
+    $('#saveProfile').onclick = ()=>{
+      state.profile.name = $('#stName').value.trim()||'Гость';
+      state.profile.role = $('#stRole').value.trim()||'Student';
+      state.profile.pic = $('#stPic').value.trim()||state.profile.pic;
+      save(); renderProfile();
+    }
+
+    $('#btnSettings').onclick = ()=> $('#settings').classList.toggle('open');
+
+    // ======= Import / Export =======
+    $('#btnExport').onclick = ()=>{
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href=url; a.download='student-dashboard.json'; a.click(); URL.revokeObjectURL(url);
+    }
+    $('#importFile').onchange = (e)=>{
+      const f = e.target.files[0]; if(!f) return; const r = new FileReader();
+      r.onload = ()=>{ try{ const data = JSON.parse(r.result); Object.assign(state, data); save(); renderAll(); }catch{ alert('Неверный JSON'); } };
+      r.readAsText(f); e.target.value='';
+    }
+
+    // ======= Links =======
+    function renderLinks(){
+      const list=$('#linksList'); list.innerHTML='';
+      state.links.forEach((l,idx)=>{
+        const a=document.createElement('a'); a.href=l.u; a.target='_blank'; a.textContent=l.t; list.appendChild(a);
+      });
+    }
+    $('#addLink').onclick = ()=>{
+      const t=$('#linkTitle').value.trim(); const u=$('#linkUrl').value.trim(); if(!t||!u) return;
+      state.links.push({t,u}); $('#linkTitle').value=''; $('#linkUrl').value=''; save(); renderLinks();
+    }
+
+    // ======= Subjects =======
+    function renderSubjects(){
+      const grid=$('#subjectsGrid'); grid.innerHTML='';
+      state.subjects.forEach((s,i)=>{
+        const el=document.createElement('div'); el.className='subject';
+        el.innerHTML=`<div class="ic">${s.ic||'📘'}</div><div style="flex:1;font-weight:700">${s.n}</div>`;
+        const rm=document.createElement('button'); rm.className='btn'; rm.textContent='×'; rm.title='Удалить';
+        rm.onclick=()=>{ state.subjects.splice(i,1); save(); renderSubjects(); renderSubjectsSelect(); drawAllCharts(); };
+        el.appendChild(rm); grid.appendChild(el);
+      });
+    }
+    function renderSubjectsSelect(){
+      const sel=$('#asSubject'); sel.innerHTML='';
+      state.subjects.forEach(s=>{ const o=document.createElement('option'); o.textContent=s.n; sel.appendChild(o); });
+    }
+    $('#addSubject').onclick = ()=>{
+      const n=$('#subjectName').value.trim(); if(!n) return; const ic=$('#subjectIcon').value.trim()||'📘';
+      state.subjects.push({n, ic}); $('#subjectName').value=''; $('#subjectIcon').value=''; save();
+      renderSubjects(); renderSubjectsSelect(); drawAllCharts();
+    }
+    $('#qaNewSubject').onclick = ()=> $('#subjectName').focus();
+
+    // ======= Assignments =======
+    function renderAssignments(){
+      const tb=$('#asTable'); tb.innerHTML='';
+      state.assignments.sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+      state.assignments.forEach((a,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${a.title}</td><td>${a.subject}</td><td>${a.status}</td><td>${a.grade??''}</td><td>${a.date??''}</td>`;
+        const td=document.createElement('td'); const del=document.createElement('button'); del.className='btn'; del.textContent='Удалить';
+        del.onclick=()=>{ state.assignments.splice(i,1); save(); renderAssignments(); drawAllCharts(); };
+        td.appendChild(del); tr.appendChild(td); tb.appendChild(tr);
+      });
+    }
+
+    $('#addAssignment').onclick = ()=>{
+      const title=$('#asTitle').value.trim(); if(!title) return;
+      const subject=$('#asSubject').value; const status=$('#asStatus').value;
+      const grade= $('#asGrade').value? Number($('#asGrade').value): undefined;
+      const date= $('#asDate').value||undefined;
+      state.assignments.push({id:crypto.randomUUID(), title, subject, status, grade, date});
+      ['asTitle','asGrade','asDate'].forEach(id=> $('#'+id).value='');
+      save(); renderAssignments(); drawAllCharts();
+    }
+    $('#qaNewAssignment').onclick = ()=> $('#asTitle').focus();
+
+    // ======= Visibility toggles in settings =======
+    $$(".settings input[type='checkbox'][data-toggle]").forEach(cb=>{
+      cb.onchange = ()=>{ const id=cb.dataset.toggle; const el = document.getElementById(id); if(!el) return; el.style.display = cb.checked? '':'none'; state['vis_'+id]=cb.checked; save(); }
+    });
+    function applyVisibility(){
+      $$(".settings input[type='checkbox'][data-toggle]").forEach(cb=>{
+        const id=cb.dataset.toggle; const val= state['vis_'+id]; if (typeof val==='boolean'){ cb.checked = val; document.getElementById(id).style.display = val? '':'none'; }
+      });
+    }
+
+    // ======= Simple Charts (no libs) =======
+    const ctxBarGrades = ()=> $('#barGrades').getContext('2d');
+    const ctxDonut = ()=> $('#donutSubjects').getContext('2d');
+    const ctxBarStatus = ()=> $('#barStatus').getContext('2d');
+
+    function clearCanvas(c){ const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
+    function sizeCanvas(c){ const dpr=window.devicePixelRatio||1; c.width = Math.floor(c.clientWidth*dpr); c.height=Math.floor(c.clientHeight*dpr); c.getContext('2d').scale(dpr,dpr); }
+
+    function drawBarGrades(){
+      const c=$('#barGrades'); sizeCanvas(c); const ctx=c.getContext('2d');
+      const subjects = state.subjects.map(s=>s.n);
+      const vals = subjects.map(s=>{
+        const arr= state.assignments.filter(a=>a.subject===s && typeof a.grade==='number').map(a=>a.grade);
+        if(!arr.length) return 0; return Math.round(arr.reduce((x,y)=>x+y,0)/arr.length);
+      });
+      const max = Math.max(100, ...vals);
+      const h= c.clientHeight-30; const barH= Math.min(26, (h-10)/Math.max(1,subjects.length));
+      ctx.font='12px system-ui'; ctx.fillStyle='#6b7280'; ctx.textBaseline='middle';
+      subjects.forEach((s,i)=>{
+        const y= 10 + i*(barH+8);
+        ctx.fillStyle='#6b7280'; ctx.fillText(s, 8, y+barH/2);
+        ctx.fillStyle='#111827'; ctx.fillRect(120, y, (c.clientWidth-140)* (vals[i]/max), barH);
+        ctx.fillStyle='#111827'; ctx.fillText(String(vals[i]||0), c.clientWidth-28, y+barH/2);
+      });
+    }
+
+    function drawDonutSubjects(){
+      const c=$('#donutSubjects'); sizeCanvas(c); const ctx=c.getContext('2d');
+      const map = new Map(); state.assignments.forEach(a=> map.set(a.subject, (map.get(a.subject)||0)+1));
+      const entries = Array.from(map.entries()); const total = entries.reduce((s,[,v])=>s+v,0);
+      const cx=c.clientWidth/2, cy=c.clientHeight/2, r=Math.min(cx,cy)-6; let start=-Math.PI/2;
+      const colors=['#111827','#3b82f6','#10b981','#f59e0b','#ef4444','#6366f1','#14b8a6'];
+      entries.forEach(([k,v],i)=>{
+        const ang= (v/Math.max(1,total))*Math.PI*2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,start+ang); ctx.closePath(); ctx.fillStyle=colors[i%colors.length]; ctx.fill(); start+=ang;
+      });
+      // hole
+      ctx.globalCompositeOperation='destination-out'; ctx.beginPath(); ctx.arc(cx,cy,r*0.6,0,Math.PI*2); ctx.fill(); ctx.globalCompositeOperation='source-over';
+      ctx.fillStyle='#111827'; ctx.font='16px system-ui'; ctx.textAlign='center'; ctx.fillText(String(total||0), cx, cy+6);
+    }
+
+    function drawBarStatus(){
+      const c=$('#barStatus'); sizeCanvas(c); const ctx=c.getContext('2d');
+      const statuses=['Late','To complete','To review','In progress','Completed'];
+      const vals=statuses.map(s=> state.assignments.filter(a=>a.status===s).length);
+      const max=Math.max(1,...vals); const w=c.clientWidth-40; const barW=Math.min(40, (w-statuses.length*10)/statuses.length);
+      ctx.font='12px system-ui'; ctx.textAlign='center';
+      statuses.forEach((s,i)=>{
+        const x= 20 + i*(barW+20) + barW/2; const h = (c.clientHeight-40) * (vals[i]/max);
+        ctx.fillStyle='#111827'; ctx.fillRect(x-barW/2, c.clientHeight-20-h, barW, h);
+        ctx.fillStyle='#6b7280'; ctx.fillText(vals[i], x, c.clientHeight-26-h);
+        ctx.fillText(s.split(' ')[0], x, c.clientHeight-6);
+      });
+    }
+
+    function drawAllCharts(){ drawBarGrades(); drawDonutSubjects(); drawBarStatus(); }
+    window.addEventListener('resize', drawAllCharts);
+
+    // ======= Render ALL =======
+    function renderAll(){
+      renderProfile(); renderLinks(); renderSubjects(); renderSubjectsSelect(); renderAssignments(); applyVisibility(); drawAllCharts();
+    }
+
+    // init
+    renderAll();
+    // Quick action placeholder
+    $('#qaNewFlashcard').onclick = ()=> alert('Добавим флеш-карты позже ✨');
+  </script>
+</body>
+</html>
